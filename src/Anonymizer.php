@@ -72,10 +72,16 @@ class Anonymizer
             throw new \Exception(sprintf("Environment '%s' has blocking enforced.", config('app.env')));
         }
 
+        $anonymizableAttributes = $model->anonymizableAttributes($this->faker);
+
+        if (method_exists($model::factory(), 'anonymizableAttributes')) {
+            $anonymizableAttributes = $model::factory()->anonymizableAttributes($this->faker);
+        }
+
         return $model
             ->setTouchedRelations([]) // disable touch owners
             ->updateQuietly( // disable events handling
-                $model->anonymizableAttributes($this->faker)
+                $anonymizableAttributes
             );
     }
 }
