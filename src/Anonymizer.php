@@ -1,6 +1,7 @@
 <?php
 
 namespace Outsidaz\LaravelDataAnonymization;
+
 use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,19 +33,20 @@ class Anonymizer
     private function getAllClasses(): array
     {
         return collect($this->getAllModels())
-                ->map(function(SplFileInfo $file){
-                    $path = $file->getRelativePathName();
-                    $class = str_replace('.php', '', $path);
-                    return config('anonymizer.models_namespace', '\\App\\Models') . '\\' . str_replace('/', '\\', $class);
-                })
-                ->toArray();
+            ->map(function (SplFileInfo $file) {
+                $path = $file->getRelativePathName();
+                $class = str_replace('.php', '', $path);
+
+                return config('anonymizer.models_namespace', '\\App\\Models') . '\\' . str_replace('/', '\\', $class);
+            })
+            ->toArray();
     }
 
     public function getAnonymizableClasses(): array
     {
         return array_filter(
             $this->getAllClasses(),
-            fn($class) => in_array(Anonymizable::class, class_uses($class), true)
+            fn ($class) => in_array(Anonymizable::class, class_uses($class), true)
         );
     }
 

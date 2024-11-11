@@ -29,9 +29,11 @@ class AnonymizerCommand extends Command
     {
         $this->service = new Anonymizer();
 
-        if (!$this->confirmToProceed('Environment "'.config('app.env').'" blocked.', function () {
-            return $this->service->isBlockedEnvironment();
-        })) {
+        if (
+            ! $this->confirmToProceed('Environment "' . config('app.env') . '" blocked.', function () {
+                return $this->service->isBlockedEnvironment();
+            })
+        ) {
             return 0;
         }
 
@@ -42,22 +44,22 @@ class AnonymizerCommand extends Command
         $anonymizableClasses = $this->service->getAnonymizableClasses();
 
         if ($specified) {
-            $anonymizableClasses=array_filter(
+            $anonymizableClasses = array_filter(
                 $anonymizableClasses,
-                fn($class) => in_array($class, $specified, true)
+                fn ($class) => in_array($class, $specified, true)
             );
         }
 
         $this->warn('Anonymization started');
 
         $anonymizableClassesOrdered = collect(config('anonymizer.ordered_models') ?? [])
-            ->map(fn($ac) => '\\'.$ac);
+            ->map(fn ($ac) => '\\' . $ac);
 
         $anonymizableClasses = collect($anonymizableClasses)
             ->diff($anonymizableClassesOrdered)
             ->toArray();
 
-        if (!empty($anonymizableClassesOrdered)) {
+        if (! empty($anonymizableClassesOrdered)) {
             $this->warn('Order dependent models anonymizing.');
         }
         foreach ($anonymizableClassesOrdered as $anonymizableClass) {
@@ -66,7 +68,7 @@ class AnonymizerCommand extends Command
             );
         }
 
-        if (!empty($anonymizableClassesOrdered)) {
+        if (! empty($anonymizableClassesOrdered)) {
             $this->warn('Remaining models anonymizing.');
         }
         $anonymizableClasses = collect($anonymizableClasses)->diff($anonymizableClassesOrdered)->all();
@@ -76,7 +78,11 @@ class AnonymizerCommand extends Command
             );
         }
 
-        $this->warn('Anonymization done in ' . CarbonInterval::seconds(microtime(true) - $anonymizationStart)->cascade()->forHumans(['parts' => 3, 'short' => true]));
+        $this->warn(
+            'Anonymization done in ' . CarbonInterval::seconds(microtime(true) - $anonymizationStart)
+                ->cascade()
+                ->forHumans(['parts' => 3, 'short' => true])
+        );
 
         return self::SUCCESS;
     }
@@ -90,19 +96,24 @@ class AnonymizerCommand extends Command
         $progressBar = $this->output->createProgressBar($this->service->getCount($model));
 
         $progressBar->setFormat('%current%/%max% [%bar%] %percent:3s%');
-        if($this->service->getCount($model)>0) {
+
+        if ($this->service->getCount($model) > 0) {
             $progressBar->setFormat('%current%/%max% [%bar%] %percent:3s%% | Remaining: %remaining:6s%');
         }
 
         $this->service->getChunk($model, function (Collection $chunkItems) use ($progressBar) {
             DB::beginTransaction();
-            $chunkItems->each(fn(Model $model) => $this->service->changeData($model));
+            $chunkItems->each(fn (Model $model) => $this->service->changeData($model));
             DB::commit();
             $progressBar->advance($chunkItems->count());
         });
 
         $progressBar->finish();
 
-        $this->info(' - Done in ' . CarbonInterval::seconds(microtime(true) - $start)->cascade()->forHumans(['parts' => 3, 'short' => true]));
+        $this->info(
+            ' - Done in ' . CarbonInterval::seconds(microtime(true) - $start)->cascade()->forHumans(
+                ['parts' => 3, 'short' => true]
+            )
+        );
     }
 }
