@@ -29,6 +29,8 @@ trait Anonymizable
             }
         }
 
-        throw new LogicException('Please implement the anonymizable method on your model or the factory.');
+        throw new LogicException(
+            'Please implement the anonymizableAttributes() method on your model or the model\'s factory.'
+        );
     }
 }
